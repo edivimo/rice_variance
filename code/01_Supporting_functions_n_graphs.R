@@ -1,21 +1,12 @@
 # Supporting functions & graphs
 
 # Loading packages
-library(readr)
+
 library(ggplot2)
 
-# Loading data
-IR8 <- read_csv(file = "data/rice_long.csv",
-                col_types = cols(
-                  Row = col_character(),
-                  Column = col_character(),
-                  value = col_double()) )
 
-CR5272 <- read_csv(file = "data/cr_rice_long.csv",
-                   col_types = cols(
-                     Row = col_character(),
-                     Column = col_character(),
-                     value = col_double()) )
+IR8 <- read.csv(file = "data/rice_long.csv")
+CR5272 <- read.csv(file = "data/cr_rice_long.csv")
 
 # Convert to numeric values
 con_number <- function(rice_var){
@@ -45,6 +36,7 @@ gr_rice_plot <- function(rice_var, gradset){
   return(rice_pl)
 }
 
+gr_rice_plot(IR8, c("Blue", "Green"))
 
 # Table of plot size and shape of the plot
 
@@ -107,11 +99,6 @@ subplot_sim <- function(c_width, c_length, rice_var){
   return(resdf)
 }
 
-subplot_sim(2,1, IR8) #348 593 883
-
-
-
-
 # Uniformity table
 
 raw_unif_table <- function(rice_var){
@@ -126,39 +113,66 @@ raw_unif_table <- function(rice_var){
   return(res_table)
 }
 
-# raw_unif_table(IR8)
 
-
-# subplot_sim
+# Makes an F-test or a Bartlett-test and returns
+# the proper variance
 subplot_test <- function(size_plot, rice_var, raw_unif){
   rice_var_num <- con_number(rice_var)
-  filt_raw <- raw_unif[raw_unif$Size == size_plot, c('Width', 'Length')]
-  
-  
-  return(filt_raw)
-}
-
-subplot_test(6, IR8, raw_unif_table(IR8))
-
-
-unif_sel <- function(raw_unif, size_plot){
-  
   filt_raw <- raw_unif[raw_unif$Size == size_plot,]
   
-  if(nrow(filt_raw) == 1){
-    sel_line <- filt_raw
-  }
+  shape_list <- lapply(1:nrow(filt_raw), function(dim_row){
+    res_shape <- subplot_tab(filt_raw$Width[dim_row],
+                             filt_raw$Length[dim_row],
+                             rice_var)
+    res_shape$Shape <- paste0(filt_raw$Width[dim_row],
+                              "x",
+                              filt_raw$Length[dim_row])
+    return(res_shape)
+  }  )
   
-  if(nrow(filt_raw) == 2){
-    sel_line <- filt_raw
+  shape_red <- Reduce(rbind, shape_list)
+  
+  # Test section
+  if(length(unique(shape_red$Shape)) > 2) {
+    res_test <- bartlett.test(x ~ Shape, data = shape_red)
   } else {
-    sel_line <- filt_raw  
+    res_test <- var.test(x ~ Shape, data = shape_red)
   }
   
-  return(sel_line)
+  # Selection of the proper value of variance
+
+  if(res_test$p.value >= 0.05) {
+    # res_df <- filt_raw
+    res_df <- filt_raw[1,]
+    res_df$Var_x[[1]] <- mean(unlist(filt_raw$Var_x))
+    res_df$Var_x_unit[[1]] <- mean(unlist(filt_raw$Var_x_unit))
+    res_df$CV[[1]] <- mean(unlist(filt_raw$CV))
+      
+  } else {
+    plain_Var_X <- unlist(filt_raw$Var_x)
+    res_df <- filt_raw[plain_Var_X == min(plain_Var_X),]
+  }
+  
+  return(res_df)
 }
 
 
-unif_sel(raw_unif_table(IR8), 6)
-unif_sel(raw_unif_table(IR8), 2)
-unif_sel(raw_unif_table(IR8), 1)
+# Reducing Raw uniformity calculations to low variance shapes
+
+unif_sel <- function(rice_var){
+  
+  raw_unif <- raw_unif_table(rice_var)
+  vec_size <- unique(raw_unif$Size)
+  sel_unif <- lapply(vec_size, 
+                     function(size_shape) {
+                       if(sum(raw_unif$Size == size_shape) == 1) {
+                         raw_unif[raw_unif$Size == size_shape,]
+                       } else {
+                         subplot_test(size_shape, rice_var, raw_unif) 
+                       }
+                     })
+  sel_df <- Reduce(rbind, sel_unif)
+  
+  return(sel_df)
+}
+
