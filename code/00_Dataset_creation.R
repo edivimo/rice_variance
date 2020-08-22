@@ -12,9 +12,10 @@ data(rice)
 cr_rice <- read_csv(file = "data/Uniformidad.csv")
 
 # Standardizing the names and converting to long format
-# names(cr_rice) <- sapply(X = 1:length(names(cr_rice)), FUN = function(x) paste0("C_", x))
-# names(rice) <- sapply(X = 1:length(names(rice)), FUN = function(x) paste0("C_", x))
-# 
+# names(cr_rice) <- 
+#   sapply(X = 1:length(names(cr_rice)), FUN = function(x) paste0("C_", x))
+# names(rice) <- sapply(X = 1:length(names(rice)),
+#                       FUN = function(x) paste0("C_", x))
 # cr_rice$Row <- sapply(X = 1:nrow(cr_rice), FUN = function(x) paste0("R_", x))
 # rice$Row <- sapply(X = 1:nrow(rice), FUN = function(x) paste0("R_", x))
 

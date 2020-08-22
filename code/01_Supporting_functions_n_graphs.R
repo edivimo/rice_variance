@@ -38,21 +38,25 @@ gr_rice_plot <- function(rice_var, gradset){
                     mapping = aes(x = Column,
                                   y = Row,
                                   fill = value)) +
-    geom_tile() + scale_fill_gradient(low = gradset[1], high = gradset[2]) +
+    geom_tile() + 
+    scale_fill_gradient(low = gradset[1], high = gradset[2]) +
     ggtitle(deparse(substitute(rice_var)))
   
   return(rice_pl)
 }
 
+
 # Table of plot size and shape of the plot
+
 shape_plot <- function(rice_var){
   rice_var_num <- con_number(rice_var)
   rice_col <- length(unique(rice_var_num$Column))
   rice_row <- length(unique(rice_var_num$Row))
   
-  tab_var <- expand.grid(Width = 1:(rice_row/2), Length=1:(rice_col/2))
-  tab_var$op_plot <- ifelse(((rice_row %% tab_var$Width) ==  0) &
-                              ((rice_col %% tab_var$Length) ==  0), TRUE, FALSE)
+  tab_var <- expand.grid(Width = 1:floor(rice_row/2),
+                         Length=1:floor(rice_col/2))
+  tab_var$op_plot <- (rice_col*rice_row)%%(tab_var$Width*tab_var$Length) == 0
+  
   
   tab_var2 <- tab_var[tab_var$op_plot,]
   tab_var2$Size <- tab_var2$Width * tab_var2$Length
@@ -66,24 +70,23 @@ shape_plot <- function(rice_var){
   
 }
 
-shape_plot(CR5272)
 
+# Function to transform the plot to a bigger subplot
 
 subplot_tab <- function(c_width, c_length, rice_var){
   rice_var_num <- con_number(rice_var)
   
-  rice_var_num$New_row <- (rice_var_num$Row %/% c_width) + (rice_var_num$Row %% c_width)
-  rice_var_num$New_col <- (rice_var_num$Column %/% c_length) + (rice_var_num$Column %% c_length)
+  rice_var_num$New_row <- ceiling(rice_var_num$Row/c_width)
+  rice_var_num$New_col <- ceiling(rice_var_num$Column/c_length)
   
   
-  # sum_rice_var_num <- aggregate(rice_var_num$value, 
-  #                               by = list(rice_var_num$New_row, rice_var_num$New_col),
-  #                               FUN = "sum")
+  sum_rice_var_num <- 
+    aggregate(rice_var_num$value,
+              by = list(rice_var_num$New_row, rice_var_num$New_col),
+              FUN = "sum")
   
-  return(rice_var_num)
+  return(sum_rice_var_num)
 }
-
-View(subplot_tab(3,2, IR8))
 
 
 # Subplot simulation by each with and length combination
@@ -91,17 +94,10 @@ View(subplot_tab(3,2, IR8))
 subplot_sim <- function(c_width, c_length, rice_var){
   rice_var_num <- con_number(rice_var)
   
-  rice_var_num$New_row <- (rice_var_num$Row %/% c_width) + (rice_var_num$Row %% c_width)
-  rice_var_num$New_col <- (rice_var_num$Column %/% c_length) + (rice_var_num$Column %% c_length)
+  sum_rice_var_num <- subplot_tab(c_width, c_length, rice_var)
   
-  # mean_rice_var_num <- aggregate(rice_var_num[, c("New_row", "New_col", "value")], 
-  #                                by = list(rice_var_num$New_row, rice_var_num$New_col),
-  #                                FUN = "mean")
-  sum_rice_var_num <- aggregate(rice_var_num[, c("New_row", "New_col", "value")], 
-                                 by = list(rice_var_num$New_row, rice_var_num$New_col),
-                                 FUN = "sum")
+  Var_x <- var(sum_rice_var_num$x)
   
-  Var_x <- var(sum_rice_var_num$value)
   Var_x_unit <- Var_x/(c_width*c_length)^2
   
   resdf <- data.frame(Var_x = Var_x, 
@@ -111,9 +107,7 @@ subplot_sim <- function(c_width, c_length, rice_var){
   return(resdf)
 }
 
-subplot_sim(3,2, IR8)
-
-
+subplot_sim(2,1, IR8) #348 593 883
 
 
 
@@ -124,7 +118,7 @@ raw_unif_table <- function(rice_var){
   shape_df <- shape_plot(rice_var)
   
   var_list <- apply(shape_df, MARGIN = 1,
-                     FUN = function(x) {subplot_sim(x[2], x[3], rice_var)}) 
+                    function(x) {subplot_sim(x[2], x[3], rice_var)}) 
     var_table <- as.data.frame(t(sapply(var_list, FUN = cbind)))
   
   res_table <- cbind(shape_df, var_table)
@@ -132,7 +126,7 @@ raw_unif_table <- function(rice_var){
   return(res_table)
 }
 
-raw_unif_table(CR5272)
+# raw_unif_table(IR8)
 
 
 # subplot_sim
@@ -146,10 +140,6 @@ subplot_test <- function(size_plot, rice_var, raw_unif){
 
 subplot_test(6, IR8, raw_unif_table(IR8))
 
-
-
-
-unif_sel(raw_unif_table(IR8), 6)
 
 unif_sel <- function(raw_unif, size_plot){
   
