@@ -1,0 +1,32 @@
+---
+title: "Exploring Variability"
+author: "Edin Villalobos"
+date: "23/8/2020"
+output: 
+  html_document:
+    toc: true
+    toc_depth: 2
+    toc_float: true
+---
+
+# Introduction
+
+
+# Exploring grain yield variability on rice
+
+## Plot yield plot, histogram
+
+## Creating subplot shapes
+
+
+# Predicting variance
+
+## Variance calculations
+
+## Selection of variance
+
+## Final equations
+
+
+# References
+

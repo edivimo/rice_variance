@@ -15,29 +15,6 @@ con_number <- function(rice_var){
   return(rice_var) 
 }
 
-# Rice plot graphic
-gr_rice_plot <- function(rice_var, gradset){
-  rice_var2 <- rice_var
-  
-  rice_var2$Row <- factor(rice_var$Row,
-                      levels = sort(unique(rice_var$Row), decreasing = TRUE))
-  
-  rice_var2$Column <- factor(rice_var$Column,
-                            levels = sort(unique(rice_var$Column)))
-  
-  rice_pl <- ggplot(data = rice_var2,
-                    mapping = aes(x = Column,
-                                  y = Row,
-                                  fill = value)) +
-    geom_tile() + 
-    scale_fill_gradient(low = gradset[1], high = gradset[2]) +
-    ggtitle(deparse(substitute(rice_var)))
-  
-  return(rice_pl)
-}
-
-gr_rice_plot(IR8, c("Blue", "Green"))
-
 # Table of plot size and shape of the plot
 
 shape_plot <- function(rice_var){
@@ -176,3 +153,54 @@ unif_sel <- function(rice_var){
   return(sel_df)
 }
 
+
+# Rice plot graphic
+
+gr_rice_plot <- function(rice_var, gradset){
+  
+  rice_var2 <- con_number(rice_var)
+  
+  
+  rice_pl <- ggplot(data = rice_var2,
+                    mapping = aes(x = Column,
+                                  y = Row,
+                                  fill = value)) +
+    geom_raster() + 
+    scale_y_reverse() +
+    scale_fill_gradient(name = expression((g/m^2)), 
+                        low = gradset[1], high = gradset[2]) +
+    ggtitle(paste("Grain yield: ", deparse(substitute(rice_var))))
+  
+  
+  return(rice_pl)
+}
+
+gr_rice_plot(IR8, c("LightGreen", "DarkGreen"))
+gr_rice_plot(CR5272, c("LightGreen", "DarkGreen"))
+
+
+# Create a scatterplot with an lm smooth
+
+gr_lm <- function(unif_data){
+  
+  # Modeling Part
+  unif_data$Var_x_unit <- unlist(unif_data$Var_x_unit)
+  mod_smith <- lm(log(Var_x_unit) ~ log(Size), data = unif_data)
+  pred_vec <- predict(mod_smith, interval = "prediction")
+  unif_data <- cbind(unif_data, exp(pred_vec))
+  # unif_data$lower_ci <- pred_vec$se
+  
+  # Graphing part
+  var_base <- ggplot(unif_data, 
+                      mapping = aes(x = Size, y = Var_x_unit))
+  
+  var_final <- var_base + geom_point() + 
+    geom_ribbon(mapping = aes(ymin = lwr, ymax = upr),
+                fill = "yellow", alpha = 0.2) +
+    geom_line(mapping = aes(y = fit))
+  
+  # return(var_final)
+  return(var_final)
+}
+
+# Remember to label axis and choose a proper theme.
