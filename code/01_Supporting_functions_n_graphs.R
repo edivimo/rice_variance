@@ -188,19 +188,41 @@ gr_lm <- function(unif_data){
   mod_smith <- lm(log(Var_x_unit) ~ log(Size), data = unif_data)
   pred_vec <- predict(mod_smith, interval = "prediction")
   unif_data <- cbind(unif_data, exp(pred_vec))
-  # unif_data$lower_ci <- pred_vec$se
+  
+  # Equation labeling
+  # label_eq <- 
+  #   paste("V(x) = ",
+  #         expression(exp(mod_smith$coefficients[1])/
+  #                      X^(exp(mod_smith$coefficients[2])) ) )
+  
+  label_eq <-
+    substitute(V[(x)] == over(b, x^m),
+               list(b = unname(round(exp(coef(mod_smith)[1]), digits = 2)),
+                    m = unname(round(exp(coef(mod_smith)[2]), digits = 2))
+                    ))
   
   # Graphing part
   var_base <- ggplot(unif_data, 
                       mapping = aes(x = Size, y = Var_x_unit))
   
-  var_final <- var_base + geom_point() + 
+  var_final <- var_base + geom_point() +
     geom_ribbon(mapping = aes(ymin = lwr, ymax = upr),
-                fill = "yellow", alpha = 0.2) +
-    geom_line(mapping = aes(y = fit))
+                fill = "darkgreen", alpha = 0.2) +
+    geom_line(mapping = aes(y = fit)) +
+    ylab("Var(x)") +
+    # geom_label(mapping = aes(x = max(Size)*(3/4),
+    #                          y = max(Var_x_unit)*(7/8),
+    #                          label = as.character(as.expression(label_eq))))
+    annotate("text",
+             x = max(unif_data$Size)*(3/4),
+             y = max(unif_data$Var_x_unit)*(9/10),
+             label = as.character(as.expression(label_eq)), parse = TRUE)
   
-  # return(var_final)
   return(var_final)
+  # return(label_eq)
 }
 
-# Remember to label axis and choose a proper theme.
+gr_lm(unif_sel(IR8)) + ggtitle("IR8")
+gr_lm(unif_sel(CR5272))
+
+
