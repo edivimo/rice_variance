@@ -127,7 +127,7 @@ subplot_test <- function(size_plot, rice_var, raw_unif){
       
   } else {
     plain_Var_X <- unlist(filt_raw$Var_x)
-    res_df <- filt_raw[plain_Var_X == min(plain_Var_X),]
+    res_df <- filt_raw[filt_raw$Var_x == min(plain_Var_X),]
   }
   
   return(res_df)
@@ -139,6 +139,7 @@ subplot_test <- function(size_plot, rice_var, raw_unif){
 unif_sel <- function(rice_var){
   
   raw_unif <- raw_unif_table(rice_var)
+  
   vec_size <- unique(raw_unif$Size)
   sel_unif <- lapply(vec_size, 
                      function(size_shape) {
@@ -149,10 +150,17 @@ unif_sel <- function(rice_var){
                        }
                      })
   sel_df <- Reduce(rbind, sel_unif)
+  sel_df2 <- sel_df[(sel_df$Plots_num/max(sel_df$Plots_num)) > 0.02,]
   
-  return(sel_df)
+  
+  return(sel_df2)
 }
 
+raw_unif_table(IR8)
+unif_sel(IR8)
+
+raw_unif_table(CR5272)
+unif_sel(CR5272)
 
 # Rice plot graphic
 
@@ -175,9 +183,6 @@ gr_rice_plot <- function(rice_var, gradset){
   return(rice_pl)
 }
 
-gr_rice_plot(IR8, c("LightGreen", "DarkGreen"))
-gr_rice_plot(CR5272, c("LightGreen", "DarkGreen"))
-
 
 # Create a scatterplot with an lm smooth
 
@@ -190,11 +195,6 @@ gr_lm <- function(unif_data){
   unif_data <- cbind(unif_data, exp(pred_vec))
   
   # Equation labeling
-  # label_eq <- 
-  #   paste("V(x) = ",
-  #         expression(exp(mod_smith$coefficients[1])/
-  #                      X^(exp(mod_smith$coefficients[2])) ) )
-  
   label_eq <-
     substitute(V[(x)] == over(b, x^m),
                list(b = unname(round(exp(coef(mod_smith)[1]), digits = 2)),
@@ -210,17 +210,44 @@ gr_lm <- function(unif_data){
                 fill = "darkgreen", alpha = 0.2) +
     geom_line(mapping = aes(y = fit)) +
     ylab("Var(x)") +
-    # geom_label(mapping = aes(x = max(Size)*(3/4),
-    #                          y = max(Var_x_unit)*(7/8),
-    #                          label = as.character(as.expression(label_eq))))
     annotate("text",
              x = max(unif_data$Size)*(3/4),
              y = max(unif_data$Var_x_unit)*(9/10),
              label = as.character(as.expression(label_eq)), parse = TRUE)
   
   return(var_final)
-  # return(label_eq)
 }
+
+gr_rice_hist <- function(rice_var){
+  
+  # rice_var2 <- con_number(rice_var)
+  value_hist <- round(min(rice_var$value), 1):round(max(rice_var$value), 1)
+  norm_hist <- dnorm(x = value_hist, 
+                     mean = mean(rice_var$value), 
+                     sd = sd(rice_var$value))
+  
+  df_hist <- data.frame(x = value_hist, y = norm_hist)
+  
+  rice_pl <- ggplot(data = rice_var,
+                    mapping = aes(x = value,
+                                  y = ..density..)) +
+    geom_histogram(binwidth = 30) + 
+    geom_line(df_hist, mapping = aes(x, y)) +
+    ggtitle(paste("Grain yield distribution: ",
+                  deparse(substitute(rice_var)))) +
+    ylab("Density") +
+    xlab(expression((g/m^2)) ) 
+  
+  
+  return(rice_pl)
+}
+
+gr_rice_hist(IR8)
+gr_rice_hist(CR5272)
+
+
+# gr_rice_plot(IR8, c("LightGreen", "DarkGreen"))
+# gr_rice_plot(CR5272, c("LightGreen", "DarkGreen"))
 
 gr_lm(unif_sel(IR8)) + ggtitle("IR8")
 gr_lm(unif_sel(CR5272))

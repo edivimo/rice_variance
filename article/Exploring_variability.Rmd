@@ -11,8 +11,18 @@ output:
 
 # Introduction
 
+One of the main goals of doing statistical inference is how to deal with the variability of the data used to make the inference. For example, when people explains how to create a linear model, a series of assumptions about variability are established and need to be checked to support the validity of the inference made with each data. In the case of agriculture experiments, is assumed that the variability of the data behaves like a normal distribution in most of the cases. In fact, a statistical inference needs to account for that variability and is better understood like the answer to the question *"How certain we're about this number given the variability observed?"*.
+
+So, when a statistical inferences is explained with data from agricultural experiments, the checks of variability according to the normal distribution are quickly explained, and then other more interesting aspects of inference are explored. But, when you need to really design an agricultural experiment, is the moment you realize that you need to go deep in exploring the variability of your main metric; and that isn't normally explained on introductory statistical courses on college.
+
+The purpose of this document is to make an exploration of production data on rice, and show what is know about the variability on agricultural experiments.
 
 # Exploring grain yield variability on rice
+
+Two main datasets are going to be used for the exploration on grain yield variability on rice. Both of these datasets are data from an uniformity trial on rice. The first one came from a classic book on agricultural data analysis **Statistical Procedures for Agricultural Research** from *Gomez and Gomez* and the other came from a trial I made a few years ago. From now on, I'm going to refer to this data as **IR8** for the data of *Gomez and Gomez* and **CR5272** to my compiled data.
+
+The name of the datasets refer to the cultivar used on each respective uniformity trial. IR8 is one of the most important cultivars in history, [really important](http://books.irri.org/RT_Supplement-IR8.pdf) and CR5272 is a Costa Rican cultivar released on 1974 and still cultivated today.
+
 
 ## Plot yield plot, histogram
 
